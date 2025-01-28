@@ -1,0 +1,23 @@
+portfolio-simulator/
+├── backend/               # Lógica del servidor (Python)
+│   ├── app/               
+│   │   ├── __init__.py    
+│   │   ├── routes/        # Endpoints API
+│   │   ├── models/        # Modelos de base de datos
+│   │   ├── utils/         # Funciones auxiliares (ej: procesar archivos)
+│   │   └── config.py      # Configuraciones (BD, claves, etc)
+│   ├── migrations/        # Migraciones de BD (si usamos ORM)
+│   ├── requirements.txt   # Dependencias
+│   └── main.py            # Punto de entrada
+│
+├── frontend/              # Interfaz web
+│   ├── public/            # Assets estáticos (HTML base, imágenes)
+│   └── src/               
+│       ├── components/    # Componentes React/Vue
+│       ├── assets/        # Estilos, íconos
+│       ├── services/      # Llamadas a la API
+│       └── App.jsx        # Componente principal
+│
+├── data/                  # Archivos de precios (uploads)
+├── docs/                  # Documentación
+└── docker-compose.yml     # Configuración Docker (opcional)

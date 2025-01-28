@@ -1,0 +1,284 @@
+{
+    "CSPX LN EQUITY": {
+        "Ticker": "CSPX LN Equity",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones EEUU",
+        "des_1": "Inversión directa en 500 compañías líderes de Estados Unidos",
+        "des_2": "El fondo pretende replicar la rentabilidad de un índice compuesto por 500 compañías de gran capitalización de Estados Unidos",
+        "Pricing": "BBG",
+        "Name": "iShares Core S&P 500 UCITS ETF",
+        "Color": "#FF5733"
+    },
+    "QQQ US EQUITY": {
+        "Ticker": "QQQ US Equity",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones EEUU",
+        "des_1": "Invesco QQQ Trust",
+        "des_2": "Acciones Tecnológicas",
+        "Pricing": "BBG",
+        "Name": "Invesco QQQ (Nasdaq-100 Index) ETF",
+        "Color": "#33C1FF"
+    },
+    "SDVY US EQUITY": {
+        "Ticker": "SDVY US EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones EEUU",
+        "des_1": "First Trust Small Cap",
+        "des_2": "Dividendos de Small Cap",
+        "Pricing": "BBG",
+        "Name": "First Trust SMID CAP Rising UCITS",
+        "Color": "#75FF33"
+    },
+    "IJPA LN EQUITY": {
+        "Ticker": "IJPA LN EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Japón",
+        "des_1": "iShares MSCI Japan ETF",
+        "des_2": "Acciones del Japón",
+        "Pricing": "BBG",
+        "Name": "iShares Core MSCI Japan ETF",
+        "Color": "#FF33A8"
+    },
+    "CEMA LN EQUITY": {
+        "Ticker": "CEMA LN EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Asia",
+        "des_1": "Exposición diversificada a acciones asiáticas",
+        "des_2": "Mercados Emergentes",
+        "Pricing": "BBG",
+        "Name": "iShares MSCI EM Asia",
+        "Color": "#FFC300"
+    },
+    "NDIA LN EQUITY": {
+        "Ticker": "NDIA LN EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones India",
+        "des_1": "Aproximadamente 85 % del mercado bursátil indio.",
+        "des_2": "Acciones del Mercado Indio",
+        "Pricing": "BBG",
+        "Name": "iShares MSCI India UCITS ETF",
+        "Color": "#C70039"
+    },
+    "IMEU LN EQUITY": {
+        "Ticker": "IMEU LN EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Europa",
+        "des_1": "Exposición diversificada a empresas europeas",
+        "des_2": "Acciones del Mercado Europeo",
+        "Pricing": "BBG",
+        "Name": "iShares MSCI Europe ETF",
+        "Color": "#581845"
+    },
+    "LTAM LN EQUITY": {
+        "Ticker": "LTAM LN EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Latinoamérica",
+        "des_1": "Exposición diversificada a compañías de América Latina",
+        "des_2": "Mercados de Latinoamérica",
+        "Pricing": "BBG",
+        "Name": "iShares MSCI Latin America",
+        "Color": "#FF7F50"
+    },
+    "ISAC LN EQUITY": {
+        "Ticker": "ISAC LN Equity",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Globales",
+        "des_1": "Exposición a un amplio rango de empresas internacionales de mercados emergentes y desarrollados",
+        "des_2": "Acciones Globales",
+        "Pricing": "BBG",
+        "Name": "iShares MSCI ACWI ETF",
+        "Color": "#9A2E2E"
+    },
+    "LQDA LN EQUITY": {
+        "Ticker": "LQDA LN Equity",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Globales",
+        "des_1": "Exposición diversificada a bonos corporativos emitidos en dólares estadounidenses",
+        "des_2": "Bonos Corporativos",
+        "Pricing": "BBG",
+        "Name": "iShares Corporate Bond ETF",
+        "Color": "#DAF7A6"
+    },
+    "JPEA LN EQUITY": {
+        "Ticker": "JPEA LN Equity",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Emergentes",
+        "des_1": "Exposición diversificada a bonos de mercados emergentes",
+        "des_2": "Deuda de Mercados Emergentes",
+        "Pricing": "BBG",
+        "Name": "J.P.Morgan EM Bond UCITS ETF",
+        "Color": "#FFC300"
+    },
+    "CFIIMDL CI EQUITY": {
+        "Ticker": "CFIIMDL CI EQUITY",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Latinoamérica",
+        "des_1": "Fondo de Inversión en Bonos Latinoamericanos",
+        "des_2": "Deuda Corporativa Latinoamericana",
+        "Pricing": "BBG",
+        "Name": "Moneda Deuda Latam",
+        "Color": "#FF5733"
+    },
+    "HLGPAFI LX EQUITY": {
+        "Ticker": "HLGPAFI LX EQUITY",
+        "Class": "Alternativos",
+        "Sub_Class": "Private Equity Fund",
+        "des_1": "Hamilton Lane Global Private Asset Fund",
+        "des_2": "Fondo de Activos Privados Globales",
+        "Pricing": "BBG",
+        "Name": "Hamilton Lane Global Private",
+        "Color": "#33C1FF"
+    },
+    "FALCTNV CI EQUITY": {
+        "Ticker": "FALCTNV CI EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Chile",
+        "des_1": "Fondo Acciones Chile",
+        "des_2": "Acciones Chile",
+        "Pricing": "BBG",
+        "Name": "Falcom Tactical Chilean Equity",
+        "Color": "#4A6FA5"  
+    },
+    "CFIMPIO CI EQUITY": {
+        "Ticker": "CFIMPIO CI EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Chile",
+        "des_1": "Fondo acciones de sociedades anónimas abiertas chilenas, emitidas por compañías pequeñas o medianas",
+        "des_2": "Acciones Chile",
+        "Pricing": "BBG",
+        "Name": "Moneda - Pionero Fondo de Inversion",
+        "Color": "#FFC300"
+    },
+    "CFIQAC CI EQUITY": {
+        "Ticker": "CFIQAC CI EQUITY",
+        "Class": "Renta Variable",
+        "Sub_Class": "Acciones Chile",
+        "des_1": "Fondo Acciones Chile",
+        "des_2": "Mercado Global",
+        "Pricing": "BBG",
+        "Name": "Quest Acciones Chile",
+        "Color": "#C70039"
+    },
+    "MRCLP CI EQUITY": {
+        "Ticker": "MRCLP CI EQUITY",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Chile",
+        "des_1": "Fondo Deuda Corporativa Chile High Yield",
+        "des_2": "Bonos Corporativos Locales",
+        "Pricing": "BBG",
+        "Name": "Moneda Renta CLP",
+        "Color": "#581845"
+    },
+    "MORCLPR CI EQUITY": {
+        "Ticker": "MORCLPR CI EQUITY",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Chile",
+        "des_1": "Fondo Deuda Corporativa Chile",
+        "des_2": "Bonos Corporativos Locales",
+        "Pricing": "BBG",
+        "Name": "Moneda Renta CLP Serie R",
+        "Color": "#FF7F50"
+    },
+    "MOCCIAU LX EQUITY": {
+        "Ticker": "MOCCIAU LX EQUITY",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Latam",
+        "des_1": "Fondo Deuda Corporativa Latam",
+        "des_2": "Bonos Corporativos LocLatamales",
+        "Pricing": "BBG",
+        "Name": "Fondo Deuda Corporativa Latam UCITS",
+        "Color": "#FF7F50"
+    },
+    "CFIETFCC CC EQUITY": {
+        "Ticker": "CFIETFCC CC EQUITY",
+        "Class": "Renta Fija",
+        "Sub_Class": "Deuda Nacional",
+        "des_1": "Fondo Deuda Nacional",
+        "des_2": "Deuda Nacional",
+        "Pricing": "BBG",
+        "Name": "Singular Chile Corp ETF",
+        "Color": "#A35A4E" 
+    },
+    "TODIICI CI EQUITY": {
+        "Ticker": "TODIICI CI EQUITY",
+        "Class": "Alternativos",
+        "Sub_Class": "Alternativos Nacional",
+        "des_1": "Fondo Activos Privados",
+        "des_2": "Inversiones Privadas",
+        "Pricing": "BBG",
+        "Name": "Toesca Deuda Privada Facturas",
+        "Color": "#DAF7A6"
+    },
+    "HMCRGBP CI EQUITY": {
+        "Ticker": "HMCRGBP CI EQUITY",
+        "Class": "Alternativos",
+        "Sub_Class": "Alternativos Nacional",
+        "des_1": "HMC Renta Global Pesos",
+        "des_2": "Fondos Privados Globales",
+        "Pricing": "BBG",
+        "Name": "HMC Renta Global Pesos",
+        "Color": "#FF5733"
+    },
+    "FALCFIW CI EQUITY": {
+        "Ticker": "FALCFIW CI Equity",
+        "Class": "Renta Fija",
+        "Sub_Class": "Bonos Nacionales",
+        "des_1": "Falcom Chile Fixed Income Fund",
+        "des_2": "Renta Fija Nacional",
+        "Pricing": "BBG",
+        "Name": "Falcom Chilean Fixed Income",
+        "Color": "#33C1FF"
+    },
+    "BARINGS": {
+        "Ticker": "BARINGS",
+        "Class": "Alternativos",
+        "Sub_Class": "Private Equity Fund",
+        "des_1": "Barings Global Private Asset Fund",
+        "des_2": "Fondo de Activos Privados Globales",
+        "Pricing": "BSantiago",
+        "Name": "Barings Global Private Asset",
+        "Color": "#FFC300"
+    },
+
+    "IPSA Index": {
+        "Ticker": "IPSA Index",
+        "Class": "Benchmark Renta Variable Nacional",
+        "Sub_Class": "Chilean Equity Index",
+        "des_1": "Indice de Precios Selectivo de Acciones",
+        "des_2": "Chilean Stock Market Index",
+        "Pricing": "BSantiago",
+        "Name": "Indice IPSA",
+        "Color": "#1E90FF"
+    },
+    "LKXPCAA0 Index": {
+        "Ticker": "LKXPCAA0 Index",
+        "Class": "Benchmark Renta Fija Nacional",
+        "Sub_Class": "Corporate Bonds",
+        "des_1": "Indice de bonos corporativos Chile",
+        "des_2": "Indice de bonos corporativos Chile",
+        "Pricing": "Bloomberg",
+        "Name": "LVA-Chile Corporate Fixed Income Index",
+        "Color": "#32CD32"
+    },
+    "LEGATRUU Index": {
+        "Ticker": "LEGATRUU Index",
+        "Class": "Benchmark Renta Fija Internacional",
+        "Sub_Class": "Global Aggregate Bonds",
+        "des_1": "Bloomberg Global Aggregate Bond Index",
+        "des_2": "Indice de Bonos Globales Agregados",
+        "Pricing": "Bloomberg",
+        "Name": "Bloomberg Global Aggregate Bond",
+        "Color": "#FF6347"
+    },
+    "MXWD Index": {
+        "Ticker": "MXWD Index",
+        "Class": "Benchmark Renta Variable Internacional",
+        "Sub_Class": "Global Equity Index",
+        "des_1": "MSCI All Country World Index",
+        "des_2": "Indice Mundial de Acciones",
+        "Pricing": "Bloomberg",
+        "Name": "MSCI ACWI Index",
+        "Color": "#FFD700"
+    }
+
+}
