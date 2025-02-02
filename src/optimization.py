@@ -1,19 +1,18 @@
 import numpy as np
 import pandas as pd
-import gurobipy as gp
-from gurobipy import GRB
+import cvxpy as cp
 import plotly.graph_objects as go
 import streamlit as st
 
-def optimize_portfolio_gurobi(prices_df, selected_assets, objective="return", custom_bounds=None):
+def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bounds=None):
     """
-    Optimiza el portafolio usando Gurobi con restricciones inteligentes.
-    
+    Optimiza el portafolio usando `cvxpy` con restricciones inteligentes.
+
     Objetivos disponibles:
     - 'return': Maximizar retorno esperado.
     - 'volatility': Minimizar volatilidad.
     - 'sharpe': Maximizar Sharpe Ratio.
-    
+
     custom_bounds (dict): Diccionario con los límites de cada activo, ej:
         {'AAPL': (0.05, 0.50), 'MSFT': (0.10, 0.40)}
     """
@@ -24,149 +23,92 @@ def optimize_portfolio_gurobi(prices_df, selected_assets, objective="return", cu
     # Calcular retornos esperados anualizados
     mean_daily_returns = returns.mean()
     expected_returns = mean_daily_returns * 252
-    expected_returns = (expected_returns - expected_returns.min()) / (expected_returns.max() - expected_returns.min())  # Normalización
-    n_assets = len(expected_returns)
+    cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
 
-    # Validar número de activos
-    if n_assets == 0:
-        st.warning("⚠️ No seleccionaste ningún activo.")
-        return None
+    n_assets = len(selected_assets)
 
-    # Crear modelo Gurobi
-    model = gp.Model("portfolio_optimization")
-
-    # Definir límites dinámicos
-    if n_assets == 1:
-        min_weight, max_weight = 1.0, 1.0  # Todo el capital en el único activo
-    elif n_assets == 2:
-        min_weight, max_weight = 0.2, 0.7  # Permitir hasta 70% en un solo activo
-    else:
-        min_weight, max_weight = 0.05, min(1.0, 0.5 / (n_assets / 2))  # Distribución razonable
-
-    # Variables de decisión con límites dinámicos o personalizados
-    weights_vars = {}
-    for asset in selected_assets:
-        lb, ub = custom_bounds.get(asset, (min_weight, max_weight)) if custom_bounds else (min_weight, max_weight)
-        weights_vars[asset] = model.addVar(lb=lb, ub=ub, name=f"weight_{asset}")
+    # Variables de pesos
+    weights = cp.Variable(n_assets)
 
     # Restricción: la suma de los pesos debe ser 1
-    model.addConstr(gp.quicksum(weights_vars[asset] for asset in selected_assets) == 1, "sum_weights")
+    constraints = [cp.sum(weights) == 1, weights >= 0]
 
-    # Definir función objetivo
+    # Aplicar límites personalizados (si existen)
+    if custom_bounds:
+        for i, asset in enumerate(selected_assets):
+            if asset in custom_bounds:
+                min_w, max_w = custom_bounds[asset]
+                constraints.append(weights[i] >= min_w)
+                constraints.append(weights[i] <= max_w)
+
+    # Definir la función objetivo
     if objective == "return":
-        model.setObjective(gp.quicksum(weights_vars[asset] * expected_returns[asset] for asset in selected_assets), GRB.MAXIMIZE)
+        obj_function = cp.Maximize(expected_returns @ weights)
 
     elif objective == "volatility":
-        cov_matrix = returns.cov() * 252
-        portfolio_variance = gp.quicksum(
-            weights_vars[a] * weights_vars[b] * cov_matrix.loc[a, b] for a in selected_assets for b in selected_assets
-        )
-        model.setObjective(portfolio_variance, GRB.MINIMIZE)
+        obj_function = cp.Minimize(cp.quad_form(weights, cov_matrix))
 
     elif objective == "sharpe":
         risk_free_rate = 0.02
-        cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
-        
-        # Calcular varianza del portafolio
-        portfolio_variance = gp.quicksum(
-            weights_vars[a] * weights_vars[b] * cov_matrix.loc[a, b] for a in selected_assets for b in selected_assets
-        )
-
-        # Variable auxiliar para la desviación estándar (raíz cuadrada de la varianza)
-        portfolio_risk = model.addVar(name="portfolio_risk")
-
-        # Restricción para que portfolio_risk sea la raíz cuadrada de portfolio_variance
-        model.addConstr(portfolio_risk * portfolio_risk == portfolio_variance, "sqrt_risk")
-
-        # Calcular retorno esperado del portafolio
-        expected_portfolio_return = gp.quicksum(weights_vars[asset] * expected_returns[asset] for asset in selected_assets)
-
-        # ✅ Nueva formulación: Maximizar (Retorno - Tasa libre de riesgo - penalización por riesgo)
-        model.setObjective((expected_portfolio_return - risk_free_rate) - 0.01 * portfolio_risk, GRB.MAXIMIZE)
-
+        portfolio_variance = cp.quad_form(weights, cov_matrix)
+        expected_portfolio_return = expected_returns @ weights
+        sharpe_ratio = (expected_portfolio_return - risk_free_rate) / cp.sqrt(portfolio_variance)
+        obj_function = cp.Maximize(sharpe_ratio)
 
     else:
         raise ValueError("Objetivo no reconocido. Usa 'return', 'volatility' o 'sharpe'.")
 
-    # Optimizar modelo
-    model.optimize()
+    # Resolver la optimización
+    problem = cp.Problem(obj_function, constraints)
+    problem.solve()
 
-    # Obtener resultados
-    if model.status == GRB.OPTIMAL:
-        optimized_weights = {asset: weights_vars[asset].X for asset in selected_assets}
-        return optimized_weights
-    else:
-        st.warning("⚠️ No se encontró una solución óptima.")
-        return None
+    # Obtener los pesos optimizados
+    optimized_weights = dict(zip(selected_assets, weights.value))
+
+    return optimized_weights
 
 
-def plot_efficient_frontier_gurobi(prices_df, selected_assets):
+def plot_efficient_frontier(prices_df, selected_assets):
     """
-    Genera y grafica la Frontera Eficiente usando Gurobi con una mejor distribución de riesgo.
+    Genera y grafica la Frontera Eficiente usando `cvxpy`.
     """
 
     returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
     expected_returns = returns.mean() * 252  # Retorno esperado anualizado
     cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
 
-    # Determinar los límites mínimo y máximo de volatilidad
-    min_volatility = np.sqrt(np.min(np.diag(cov_matrix)))  # Activo menos riesgoso
-    max_volatility = np.sqrt(np.max(np.diag(cov_matrix)))  # Activo más riesgoso
-    risk_levels = np.linspace(min_volatility * 0.5, max_volatility * 1.5, 50)  # 50 niveles bien distribuidos
-
+    # Definir niveles de riesgo (volatilidad)
+    risk_levels = np.linspace(0.05, 0.5, 50)
     optimal_returns = []
 
     for risk in risk_levels:
-        model = gp.Model("efficient_frontier")
-        weights = model.addVars(len(selected_assets), lb=0, ub=1, name="weights")
+        weights = cp.Variable(len(selected_assets))
+        constraints = [cp.sum(weights) == 1, weights >= 0]
+        portfolio_variance = cp.quad_form(weights, cov_matrix)
 
-        # Restricción: La suma de los pesos debe ser 1
-        model.addConstr(gp.quicksum(weights[i] for i in range(len(selected_assets))) == 1, "sum_weights")
+        constraints.append(cp.sqrt(portfolio_variance) <= risk)
+        portfolio_return = expected_returns @ weights
 
-        # Calcular varianza del portafolio
-        portfolio_variance = gp.quicksum(
-            weights[i] * weights[j] * cov_matrix.iloc[i, j] 
-            for i in range(len(selected_assets)) for j in range(len(selected_assets))
-        )
+        problem = cp.Problem(cp.Maximize(portfolio_return), constraints)
+        problem.solve()
 
-        # Restricción de volatilidad
-        model.addConstr(portfolio_variance <= risk**2, "risk_constraint")
-
-        # Maximizar retorno esperado
-        portfolio_return = gp.quicksum(weights[i] * expected_returns.iloc[i] for i in range(len(selected_assets)))
-        model.setObjective(portfolio_return, GRB.MAXIMIZE)
-        model.optimize()
-
-        if model.status == GRB.OPTIMAL:
-            optimal_returns.append(portfolio_return.getValue())
+        if problem.status == cp.OPTIMAL:
+            optimal_returns.append(portfolio_return.value)
         else:
             optimal_returns.append(None)
 
-    # **Corrección importante:** Filtramos valores None para evitar problemas en el gráfico
+    # Filtrar valores inválidos
     risk_levels_filtered = [r for r, ret in zip(risk_levels, optimal_returns) if ret is not None]
     optimal_returns_filtered = [ret for ret in optimal_returns if ret is not None]
 
     # Crear gráfico con Plotly
     fig = go.Figure()
-
-    # Agregar la Frontera Eficiente
     fig.add_trace(go.Scatter(
         x=risk_levels_filtered, 
         y=optimal_returns_filtered,
         mode='lines',
-        fill='tozeroy',
         name='Frontera Eficiente',
         line=dict(color='green', width=2)
-    ))
-
-    # Agregar punto del portafolio de mínima volatilidad
-    min_risk_index = np.argmin(risk_levels_filtered)
-    fig.add_trace(go.Scatter(
-        x=[risk_levels_filtered[min_risk_index]],
-        y=[optimal_returns_filtered[min_risk_index]],
-        mode='markers',
-        marker=dict(color='red', size=10),
-        name='Portafolio Mínima Volatilidad'
     ))
 
     # Personalizar gráfico
@@ -174,11 +116,8 @@ def plot_efficient_frontier_gurobi(prices_df, selected_assets):
         title="📈 Frontera Eficiente de Portafolio",
         xaxis_title="Riesgo (Volatilidad Anualizada)",
         yaxis_title="Retorno Esperado",
-        template="plotly_white",
-        hovermode="x unified"
+        template="plotly_white"
     )
 
     # Mostrar en Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
-
