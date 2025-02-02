@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import plotly
 
 def plot_portfolio_value(portfolio, prices_df, start_date, end_date):
     """Genera un gráfico interactivo de área del valor del portafolio en el tiempo usando Plotly."""
