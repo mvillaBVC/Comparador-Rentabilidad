@@ -17,18 +17,20 @@ def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bo
         {'AAPL': (0.05, 0.50), 'MSFT': (0.10, 0.40)}
     """
 
+    # Verificar si hay activos seleccionados
+    if not selected_assets:
+        st.warning("⚠️ No seleccionaste ningún activo.")
+        return None
+
     # Filtrar activos y calcular retornos diarios
     returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
-    
-    # Calcular retornos esperados anualizados
-    mean_daily_returns = returns.mean()
-    expected_returns = mean_daily_returns * 252
+
+    # Calcular retornos esperados anualizados y matriz de covarianza
+    expected_returns = returns.mean() * 252
     cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
 
     n_assets = len(selected_assets)
-
-    # Variables de pesos
-    weights = cp.Variable(n_assets)
+    weights = cp.Variable(n_assets)  # Variable de pesos
 
     # Restricción: la suma de los pesos debe ser 1
     constraints = [cp.sum(weights) == 1, weights >= 0]
@@ -43,7 +45,7 @@ def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bo
 
     # Definir la función objetivo
     if objective == "return":
-        obj_function = cp.Maximize(expected_returns @ weights)
+        obj_function = cp.Maximize(expected_returns.values @ weights)
 
     elif objective == "volatility":
         obj_function = cp.Minimize(cp.quad_form(weights, cov_matrix))
@@ -51,7 +53,7 @@ def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bo
     elif objective == "sharpe":
         risk_free_rate = 0.02
         portfolio_variance = cp.quad_form(weights, cov_matrix)
-        expected_portfolio_return = expected_returns @ weights
+        expected_portfolio_return = expected_returns.values @ weights
         sharpe_ratio = (expected_portfolio_return - risk_free_rate) / cp.sqrt(portfolio_variance)
         obj_function = cp.Maximize(sharpe_ratio)
 
@@ -60,7 +62,15 @@ def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bo
 
     # Resolver la optimización
     problem = cp.Problem(obj_function, constraints)
-    problem.solve()
+    
+    try:
+        problem.solve()
+        if problem.status not in ["optimal", "optimal_inaccurate"]:
+            st.warning("⚠️ No se encontró una solución óptima.")
+            return None
+    except Exception as e:
+        st.error(f"❌ Error en la optimización: {str(e)}")
+        return None
 
     # Obtener los pesos optimizados
     optimized_weights = dict(zip(selected_assets, weights.value))
@@ -72,6 +82,11 @@ def plot_efficient_frontier(prices_df, selected_assets):
     """
     Genera y grafica la Frontera Eficiente usando `cvxpy`.
     """
+
+    # Verificar si hay activos seleccionados
+    if not selected_assets:
+        st.warning("⚠️ No hay activos seleccionados para graficar la frontera eficiente.")
+        return
 
     returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
     expected_returns = returns.mean() * 252  # Retorno esperado anualizado
@@ -87,19 +102,26 @@ def plot_efficient_frontier(prices_df, selected_assets):
         portfolio_variance = cp.quad_form(weights, cov_matrix)
 
         constraints.append(cp.sqrt(portfolio_variance) <= risk)
-        portfolio_return = expected_returns @ weights
+        portfolio_return = expected_returns.values @ weights
 
         problem = cp.Problem(cp.Maximize(portfolio_return), constraints)
-        problem.solve()
-
-        if problem.status == cp.OPTIMAL:
-            optimal_returns.append(portfolio_return.value)
-        else:
+        
+        try:
+            problem.solve()
+            if problem.status == cp.OPTIMAL:
+                optimal_returns.append(portfolio_return.value)
+            else:
+                optimal_returns.append(None)
+        except:
             optimal_returns.append(None)
 
     # Filtrar valores inválidos
     risk_levels_filtered = [r for r, ret in zip(risk_levels, optimal_returns) if ret is not None]
     optimal_returns_filtered = [ret for ret in optimal_returns if ret is not None]
+
+    if not risk_levels_filtered:
+        st.warning("⚠️ No se pudo calcular la frontera eficiente.")
+        return
 
     # Crear gráfico con Plotly
     fig = go.Figure()
