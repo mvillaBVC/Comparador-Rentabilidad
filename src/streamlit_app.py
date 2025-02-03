@@ -4,7 +4,7 @@ from utils import load_prices, load_dictionary, map_tickers
 from portfolio import Portfolio
 from visualization import plot_portfolio_value  # ✅ Importamos el nuevo módulo
 import os
-from optimization import optimize_portfolio, plot_efficient_frontier
+from optimization import PortfolioOptimization
 
 
 
@@ -143,19 +143,21 @@ def main():
             max_w = st.sidebar.slider(f"🔼 Máximo % en {asset}", min_w, 1.0, 0.50, step=0.05)
             custom_bounds[asset] = (min_w, max_w)
 
-    # Optimización de Portafolio
     st.header("🔬 Optimización de Portafolio")
     objective = st.selectbox("Selecciona el objetivo de optimización:", ["sharpe", "volatility", "return"])
 
     if st.button("🚀 Optimizar Portafolio"):
-        optimized_weights = optimize_portfolio(prices_df, selected_assets, objective, custom_bounds)
+        optimizer = PortfolioOptimization(prices_df, selected_assets, objective=objective)
+        optimized_weights = optimizer.optimize()
+
         if optimized_weights:
             st.write("📊 **Pesos óptimos:**")
             st.write(pd.DataFrame(optimized_weights.items(), columns=["Activo", "Peso (%)"]))
 
     # Frontera Eficiente
     if st.button("📈 Mostrar Frontera Eficiente"):
-        plot_efficient_frontier(prices_df, selected_assets)
+        optimizer = PortfolioOptimization(prices_df, selected_assets)
+        optimizer.plot_efficient_frontier()
 
 
 if __name__ == "__main__":

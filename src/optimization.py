@@ -1,145 +1,124 @@
 import numpy as np
 import pandas as pd
-import cvxpy as cp
 import plotly.graph_objects as go
 import streamlit as st
+import scipy.optimize as sc
 
-def optimize_portfolio(prices_df, selected_assets, objective="return", custom_bounds=None):
+
+class PortfolioOptimization:
     """
-    Optimiza el portafolio usando `cvxpy` con restricciones inteligentes.
-
-    Objetivos disponibles:
-    - 'return': Maximizar retorno esperado.
-    - 'volatility': Minimizar volatilidad.
-    - 'sharpe': Maximizar Sharpe Ratio.
-
-    custom_bounds (dict): Diccionario con los límites de cada activo, ej:
-        {'AAPL': (0.05, 0.50), 'MSFT': (0.10, 0.40)}
+    Clase para realizar optimización de portafolios, incluyendo:
+    - Maximización del ratio de Sharpe.
+    - Minimización de la volatilidad.
+    - Maximización del retorno esperado.
     """
 
-    # Verificar si hay activos seleccionados
-    if not selected_assets:
-        st.warning("⚠️ No seleccionaste ningún activo.")
-        return None
+    def __init__(self, prices_df, selected_assets, objective="sharpe", risk_free_rate=0.02, constraint_set=(0, 1)):
+        """
+        Inicializa la optimización del portafolio.
 
-    # Filtrar activos y calcular retornos diarios
-    returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
+        Parámetros:
+        - prices_df (DataFrame): Datos históricos de precios de los activos.
+        - selected_assets (list): Lista de activos seleccionados.
+        - objective (str): 'return', 'volatility' o 'sharpe'.
+        - risk_free_rate (float): Tasa libre de riesgo (por defecto 0.02).
+        - constraint_set (tuple): Límites de pesos de los activos (por defecto (0,1)).
+        """
+        if not selected_assets:
+            st.warning("⚠️ No seleccionaste ningún activo.")
+            return None
 
-    # Calcular retornos esperados anualizados y matriz de covarianza
-    expected_returns = returns.mean() * 252
-    cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
+        self.returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
+        self.mean_returns = self.returns.mean() * 252  # Retornos esperados anualizados
+        self.cov_matrix = self.returns.cov() * 252  # Matriz de covarianza anualizada
+        self.selected_assets = selected_assets
+        self.objective = objective
+        self.risk_free_rate = risk_free_rate
+        self.constraint_set = constraint_set
 
-    n_assets = len(selected_assets)
-    weights = cp.Variable(n_assets)  # Variable de pesos
+    def _negative_sharpe(self, weights):
+        """ Calcula el Sharpe Ratio negativo para maximización. """
+        portfolio_return = np.dot(weights, self.mean_returns)
+        portfolio_std = np.sqrt(np.dot(weights.T, np.dot(self.cov_matrix, weights)))
+        return -(portfolio_return - self.risk_free_rate) / portfolio_std  # Se multiplica por -1 para maximizar
 
-    # Restricción: la suma de los pesos debe ser 1
-    constraints = [cp.sum(weights) == 1, weights >= 0]
+    def _portfolio_std(self, weights):
+        """ Calcula la desviación estándar (volatilidad) del portafolio. """
+        return np.sqrt(np.dot(weights.T, np.dot(self.cov_matrix, weights)))
 
-    # Aplicar límites personalizados (si existen)
-    if custom_bounds:
-        for i, asset in enumerate(selected_assets):
-            if asset in custom_bounds:
-                min_w, max_w = custom_bounds[asset]
-                constraints.append(weights[i] >= min_w)
-                constraints.append(weights[i] <= max_w)
+    def _negative_return(self, weights):
+        """ Calcula el retorno negativo del portafolio para maximización. """
+        return -np.dot(weights, self.mean_returns)
 
-    # Definir la función objetivo
-    if objective == "return":
-        obj_function = cp.Maximize(expected_returns.values @ weights)
+    def optimize(self):
+        """ Ejecuta la optimización según el objetivo seleccionado. """
+        num_assets = len(self.selected_assets)
+        constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})  # Restricción: suma de pesos = 1
+        bounds = tuple(self.constraint_set for _ in range(num_assets))
 
-    elif objective == "volatility":
-        obj_function = cp.Minimize(cp.quad_form(weights, cov_matrix))
+        # Selección del objetivo
+        if self.objective == "sharpe":
+            result = sc.minimize(self._negative_sharpe, num_assets * [1. / num_assets], method='SLSQP', bounds=bounds, constraints=constraints)
+        elif self.objective == "volatility":
+            result = sc.minimize(self._portfolio_std, num_assets * [1. / num_assets], method='SLSQP', bounds=bounds, constraints=constraints)
+        elif self.objective == "return":
+            result = sc.minimize(self._negative_return, num_assets * [1. / num_assets], method='SLSQP', bounds=bounds, constraints=constraints)
+        else:
+            raise ValueError("Objetivo no reconocido. Usa 'return', 'volatility' o 'sharpe'.")
 
-    elif objective == "sharpe":
-        risk_free_rate = 0.02
-        portfolio_variance = cp.quad_form(weights, cov_matrix)
-        expected_portfolio_return = expected_returns.values @ weights
-        sharpe_ratio = (expected_portfolio_return - risk_free_rate) / cp.sqrt(portfolio_variance)
-        obj_function = cp.Maximize(sharpe_ratio)
-
-    else:
-        raise ValueError("Objetivo no reconocido. Usa 'return', 'volatility' o 'sharpe'.")
-
-    # Resolver la optimización
-    problem = cp.Problem(obj_function, constraints)
-    
-    try:
-        problem.solve()
-        if problem.status not in ["optimal", "optimal_inaccurate"]:
+        if result.success:
+            optimized_weights = dict(zip(self.selected_assets, result.x))
+            return optimized_weights
+        else:
             st.warning("⚠️ No se encontró una solución óptima.")
             return None
-    except Exception as e:
-        st.error(f"❌ Error en la optimización: {str(e)}")
-        return None
 
-    # Obtener los pesos optimizados
-    optimized_weights = dict(zip(selected_assets, weights.value))
+    def plot_efficient_frontier(self):
+        """ Genera y grafica la Frontera Eficiente. """
+        risk_levels = np.linspace(0.05, 0.5, 50)
+        optimal_returns = []
 
-    return optimized_weights
+        for risk in risk_levels:
+            num_assets = len(self.selected_assets)
+            weights = np.ones(num_assets) / num_assets
+            constraints = [
+                {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},  # Suma de pesos = 1
+                {'type': 'ineq', 'fun': lambda x: risk - np.sqrt(np.dot(x.T, np.dot(self.cov_matrix, x)))}
+            ]
+            bounds = tuple(self.constraint_set for _ in range(num_assets))
 
+            result = sc.minimize(self._negative_return, weights, method='SLSQP', bounds=bounds, constraints=constraints)
 
-def plot_efficient_frontier(prices_df, selected_assets):
-    """
-    Genera y grafica la Frontera Eficiente usando `cvxpy`.
-    """
-
-    # Verificar si hay activos seleccionados
-    if not selected_assets:
-        st.warning("⚠️ No hay activos seleccionados para graficar la frontera eficiente.")
-        return
-
-    returns = prices_df.set_index("DATE")[selected_assets].pct_change().dropna()
-    expected_returns = returns.mean() * 252  # Retorno esperado anualizado
-    cov_matrix = returns.cov() * 252  # Matriz de covarianza anualizada
-
-    # Definir niveles de riesgo (volatilidad)
-    risk_levels = np.linspace(0.05, 0.5, 50)
-    optimal_returns = []
-
-    for risk in risk_levels:
-        weights = cp.Variable(len(selected_assets))
-        constraints = [cp.sum(weights) == 1, weights >= 0]
-        portfolio_variance = cp.quad_form(weights, cov_matrix)
-
-        constraints.append(cp.sqrt(portfolio_variance) <= risk)
-        portfolio_return = expected_returns.values @ weights
-
-        problem = cp.Problem(cp.Maximize(portfolio_return), constraints)
-        
-        try:
-            problem.solve()
-            if problem.status == cp.OPTIMAL:
-                optimal_returns.append(portfolio_return.value)
+            if result.success:
+                optimal_returns.append(-result.fun)  # Multiplicado por -1 para reflejar el retorno real
             else:
                 optimal_returns.append(None)
-        except:
-            optimal_returns.append(None)
 
-    # Filtrar valores inválidos
-    risk_levels_filtered = [r for r, ret in zip(risk_levels, optimal_returns) if ret is not None]
-    optimal_returns_filtered = [ret for ret in optimal_returns if ret is not None]
+        # Filtrar valores inválidos
+        risk_levels_filtered = [r for r, ret in zip(risk_levels, optimal_returns) if ret is not None]
+        optimal_returns_filtered = [ret for ret in optimal_returns if ret is not None]
 
-    if not risk_levels_filtered:
-        st.warning("⚠️ No se pudo calcular la frontera eficiente.")
-        return
+        if not risk_levels_filtered:
+            st.warning("⚠️ No se pudo calcular la frontera eficiente.")
+            return
 
-    # Crear gráfico con Plotly
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=risk_levels_filtered, 
-        y=optimal_returns_filtered,
-        mode='lines',
-        name='Frontera Eficiente',
-        line=dict(color='green', width=2)
-    ))
+        # Crear gráfico con Plotly
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=risk_levels_filtered,
+            y=optimal_returns_filtered,
+            mode='lines',
+            name='Frontera Eficiente',
+            line=dict(color='green', width=2)
+        ))
 
-    # Personalizar gráfico
-    fig.update_layout(
-        title="📈 Frontera Eficiente de Portafolio",
-        xaxis_title="Riesgo (Volatilidad Anualizada)",
-        yaxis_title="Retorno Esperado",
-        template="plotly_white"
-    )
+        # Personalizar gráfico
+        fig.update_layout(
+            title="📈 Frontera Eficiente de Portafolio",
+            xaxis_title="Riesgo (Volatilidad Anualizada)",
+            yaxis_title="Retorno Esperado",
+            template="plotly_white"
+        )
 
-    # Mostrar en Streamlit
-    st.plotly_chart(fig, use_container_width=True)
+        # Mostrar en Streamlit
+        st.plotly_chart(fig, use_container_width=True)
